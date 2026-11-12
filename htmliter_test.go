@@ -244,6 +244,36 @@ func TestGetTextContentRecursive(t *testing.T) {
 	}
 }
 
+func TestIgnoreToken(t *testing.T) {
+	var r = strings.NewReader(htmlString)
+	tozer := NewTozer(r)
+	for token, err := range tozer.Children() {
+		if err != nil && !errors.Is(err, io.EOF) {
+			t.Error(err)
+		}
+		if token.HasTag("ul") && token.HasAttr("class", "Hero-blurbList") {
+			idx := 0
+			for token, err := range tozer.Children() {
+				if err != nil && !errors.Is(err, io.EOF) {
+					t.Error(err)
+				}
+				if token.HasTag("li") {
+					idx++
+					if idx != 3 {
+						tozer.Ignore()
+					} else {
+						text := strings.Trim(tozer.TextContent(), "\n ")
+						want := "Built-in concurrency and a robust standard library"
+						if text != want {
+							t.Errorf("result not match\nresult: %s\nwant:   %s", text, want)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func TestTagId(t *testing.T) {
 	var r = strings.NewReader(htmlString)
 	tozer := NewTozer(r)

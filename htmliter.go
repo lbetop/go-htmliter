@@ -63,7 +63,7 @@ var voidElements = map[string]struct{}{
 	"meta": {}, "param": {}, "source": {}, "track": {}, "wbr": {},
 }
 
-// Children returns a single-use iterator over the immediate child tokens inside the current token block.
+// Children returns a single-use iterator over all child tokens inside the current token block.
 func (tozer *Tozer) Children() iter.Seq2[*Token, error] {
 	return func(yield func(*Token, error) bool) {
 		id := tozer.id - 1
@@ -82,7 +82,7 @@ func (tozer *Tozer) Children() iter.Seq2[*Token, error] {
 	}
 }
 
-// TextContent returns the concatenated text content inside the current node block.
+// TextContent returns the concatenated text content inside the current token block.
 // The output is like [Node.textContent].
 // Since this method consumes the underlying tokenizer stream to gather text,
 // subsequent calls will not produce the same output.
@@ -102,6 +102,18 @@ func (tozer *Tozer) TextContent() string {
 		}
 	}
 	return res.String()
+}
+
+// Ignore ignores the current token block.
+func (tozer *Tozer) Ignore() {
+	id := tozer.id - 1
+	for tozer.id > id {
+		token := tozer.next()
+		switch token.Type {
+		case ErrorToken:
+			return
+		}
+	}
 }
 
 // SetMaxBuf sets a limit on the maximum data buffered during tokenization to prevent excessive memory usage.
